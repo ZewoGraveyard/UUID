@@ -1,7 +1,7 @@
 # UUID
 [![Swift 3](https://img.shields.io/badge/Swift-3.0-orange.svg?style=flat)](https://swift.org) [![Platform Linux](https://img.shields.io/badge/Platform-Linux-lightgray.svg?style=flat)](https://swift.org) [![License MIT](https://img.shields.io/badge/License-MIT-blue.svg?style=flat)](https://tldrlegal.com/license/mit-license)
 
-Easily generate UUID's (Universally Unique Identifier)
+Easily generate UUID's (Universally Unique Identifier). Development snapshots 04/12-05/03 are supported in 0.2. For earlier versions use 0.1.
 
 This is ripped out of [SwiftFoundation](https://github.com/PureSwift/SwiftFoundation) with some minor changes.
 
