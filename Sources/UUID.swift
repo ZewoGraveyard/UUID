@@ -42,7 +42,7 @@ public extension UUID {
 
     init?(rawValue: String) {
 
-        guard let uuid = POSIXUUIDConvertStringToUUID(rawValue)
+        guard let uuid = POSIXUUIDConvertStringToUUID(string: rawValue)
             else { return nil }
 
         self.byteValue = uuid
@@ -50,7 +50,7 @@ public extension UUID {
 
     var rawValue: String {
 
-        return POSIXUUIDConvertToString(byteValue)
+        return POSIXUUIDConvertToString(uuid: byteValue)
     }
 }
 
@@ -75,9 +75,9 @@ public func POSIXUUIDCreateRandom() -> uuid_t {
 
 public func POSIXUUIDConvertToString(uuid: uuid_t) -> String {
 
-    let uuidString = POSIXUUIDConvertToUUIDString(uuid)
+    let uuidString = POSIXUUIDConvertToUUIDString(uuid: uuid)
 
-    return POSIXUUIDStringConvertToString(uuidString)
+    return POSIXUUIDStringConvertToString(uuidString: uuidString)
 }
 
 public func POSIXUUIDConvertToUUIDString(uuid: uuid_t) -> POSIXUUIDStringType {
