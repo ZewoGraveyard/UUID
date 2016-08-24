@@ -4,25 +4,53 @@ import XCTest
 class UUIDTests: XCTestCase {
 
     func testCreateRandomUUID() {
-        let _ = UUID()
-        XCTAssert(true)
+        // if it doesn't crash, we're good
+        let uuid = UUID()
+        print(uuid)
+    }
+
+    func testPerformance() {
+        measure {
+            for _ in 0..<1_000 {
+                let uuid = UUID()
+                uuid.rawValue
+            }
+        }
     }
 
     func testUUIDString() {
-        let stringValue = "5BFEB194-68C4-48E8-8F43-3C586364CB6F"
+        let string = "5BFEB194-68C4-48E8-8F43-3C586364CB6F"
 
-        guard let uuid = UUID(rawValue: stringValue) else {
-            return XCTFail("Could not create UUID from " + stringValue)
-        }
-
-        XCTAssert(uuid.rawValue == stringValue, "UUID is \(uuid), should be \(stringValue)")
+        XCTAssertNotNil(UUID(rawValue: string))
+        XCTAssertEqual(UUID(rawValue: string)?.description, string)
+        XCTAssertEqual(UUID(rawValue: UUID(rawValue: string)?.rawValue ?? "")?.rawValue, string)
+        XCTAssertNil(UUID(rawValue: "BadInput"))
     }
 
-    func testCreateFromString() {
-        let stringValue = "5BFEB194-68C4-48E8-8F43-3C586364CB6F"
+    func testEquality() {
+        let uuid1 = UUID()
+        let uuid2 = UUID()
 
-        XCTAssert((UUID(rawValue: stringValue) != nil), "Could not create UUID with string \"\(stringValue)\"")
-        XCTAssert((UUID(rawValue: "BadInput") == nil), "UUID should not be created")
+        XCTAssertEqual(uuid1, uuid1)
+        XCTAssertEqual(uuid2, uuid2)
+        XCTAssertNotEqual(uuid1, uuid2)
+    }
+
+    func testHashing() {
+        let string = "5BFEB194-68C4-48E8-8F43-3C586364CB6F"
+        let uuid = UUID(rawValue: string)
+
+        let uuid1 = UUID()
+        let uuid2 = UUID()
+
+        print(uuid1.hashValue)
+        print(uuid2.hashValue)
+        // make sure its consistent
+        XCTAssertEqual(uuid?.hashValue, -1502156184398809678)
+        XCTAssertEqual(uuid1.hashValue, uuid1.hashValue)
+        XCTAssertEqual(uuid2.hashValue, uuid2.hashValue)
+        // make sure its unique
+        XCTAssertNotEqual(uuid1.hashValue, uuid2.hashValue)
     }
 }
 
@@ -30,8 +58,10 @@ extension UUIDTests {
     static var allTests : [(String, (UUIDTests) -> () throws -> Void)] {
         return [
            ("testCreateRandomUUID", testCreateRandomUUID),
+           ("testPerformance", testPerformance),
            ("testUUIDString", testUUIDString),
-           ("testCreateFromString", testCreateFromString)
+           ("testEquality", testEquality),
+           ("testHashing", testHashing)
         ]
     }
 }
