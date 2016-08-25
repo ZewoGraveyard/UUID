@@ -9,6 +9,7 @@ class UUIDTests: XCTestCase {
         print(uuid)
     }
 
+    #if !os(Linux)
     func testPerformance() {
         measure {
             for _ in 0..<1_000 {
@@ -17,6 +18,7 @@ class UUIDTests: XCTestCase {
             }
         }
     }
+    #endif
 
     func testUUIDString() {
         let string = "5BFEB194-68C4-48E8-8F43-3C586364CB6F"
@@ -38,13 +40,11 @@ class UUIDTests: XCTestCase {
 
     func testHashing() {
         let string = "5BFEB194-68C4-48E8-8F43-3C586364CB6F"
-        let uuid = UUID(rawValue: string)
 
+        let uuid = UUID(rawValue: string)
         let uuid1 = UUID()
         let uuid2 = UUID()
 
-        print(uuid1.hashValue)
-        print(uuid2.hashValue)
         // make sure its consistent
         XCTAssertEqual(uuid?.hashValue, -1502156184398809678)
         XCTAssertEqual(uuid1.hashValue, uuid1.hashValue)
@@ -58,7 +58,6 @@ extension UUIDTests {
     static var allTests : [(String, (UUIDTests) -> () throws -> Void)] {
         return [
            ("testCreateRandomUUID", testCreateRandomUUID),
-           ("testPerformance", testPerformance),
            ("testUUIDString", testUUIDString),
            ("testEquality", testEquality),
            ("testHashing", testHashing)

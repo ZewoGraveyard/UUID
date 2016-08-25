@@ -8,25 +8,24 @@
 
 import POSIX
 
-private class DeallocatingContainer {
-    let buffer: UnsafeMutableBufferPointer<UInt8>
-    init(buffer: UnsafeMutableBufferPointer<UInt8>) {
-        self.buffer = buffer
-    }
-
-    deinit {
-        buffer.baseAddress?.deallocateCapacity(buffer.count)
-    }
-}
-
 public struct UUID {
 
-    private let container: DeallocatingContainer
-    public var buffer: UnsafeMutableBufferPointer<UInt8> {
-        return container.buffer
+    static let size = 16
+
+    private final class DeallocatingContainer {
+        let bytes: UnsafeMutablePointer<UInt8>
+        init(bytes: UnsafeMutablePointer<UInt8>) {
+            self.bytes = bytes
+        }
+
+        deinit {
+            bytes.deallocateCapacity(UUID.size)
+        }
     }
+
+    private let container: DeallocatingContainer
     public var bytes: UnsafeMutablePointer<UInt8> {
-        return buffer.baseAddress!
+        return container.bytes
     }
 
     /**
@@ -36,7 +35,7 @@ public struct UUID {
      deallocate the memory when it is no longer in use.
      */
     public init(bytes: UnsafeMutablePointer<UInt8>) {
-        self.container = DeallocatingContainer(buffer: UnsafeMutableBufferPointer(start: bytes, count: 16))
+        self.container = DeallocatingContainer(bytes: bytes)
     }
 
     /**
@@ -44,9 +43,9 @@ public struct UUID {
      */
     public init() {
         let bytes: UnsafeMutablePointer<UInt8> = {
-            let bytes = UnsafeMutablePointer<UInt8>(allocatingCapacity: 16)
+            let bytes = UnsafeMutablePointer<UInt8>(allocatingCapacity: UUID.size)
             let fd = open("/dev/urandom", O_RDONLY)
-            read(fd, bytes, 16)
+            read(fd, bytes, UUID.size)
             close(fd)
             return bytes
         }()
@@ -72,13 +71,14 @@ extension UUID: CustomStringConvertible, RawRepresentable {
     /// where each X represents the hexadecimal
     /// representation of each byte.
     public var rawValue: String {
-        // XXXX-XX-XX-XX-XXXXXX
         let ranges = [0..<4, 4..<6, 6..<8, 8..<10, 10..<16]
 
         return ranges.map { range in
-            range.reduce("") { total, i in
-                total + String(bytes[i], radix: 16, uppercase: true)
+            var str = ""
+            for i in range {
+                str += String(bytes[i], radix: 16, uppercase: true)
             }
+            return str
         }.joined(separator: "-")
     }
 
@@ -94,23 +94,23 @@ extension UUID: CustomStringConvertible, RawRepresentable {
             return nil
         }
 
-        let bytes = UnsafeMutablePointer<UInt8>.init(allocatingCapacity: 16)
+        let bytes = UnsafeMutablePointer<UInt8>.init(allocatingCapacity: UUID.size)
 
         let out = UnsafeMutablePointer<Int32>(allocatingCapacity: 1)
         defer { out.deallocateCapacity(1) }
 
         let result: Int32 = rawValue.withCString { cString in
-            let list = (0..<16).map { bytes.advanced(by: $0) as CVarArg }
-            let args = getVaList(list + [out])
-
-            return vsscanf(
-                // in
-                cString,
-                // format
-                "%2hhx%2hhx%2hhx%2hhx-%2hhx%2hhx-%2hhx%2hhx-%2hhx%2hhx-%2hhx%2hhx%2hhx%2hhx%2hhx%2hhx%n",
-                // args
-                args
-            )
+            let list = (0..<UUID.size).map { bytes.advanced(by: $0) as CVarArg }
+            return withVaList(list + [out]) { args in
+                vsscanf(
+                    // in
+                    cString,
+                    // format
+                    "%2hhx%2hhx%2hhx%2hhx-%2hhx%2hhx-%2hhx%2hhx-%2hhx%2hhx-%2hhx%2hhx%2hhx%2hhx%2hhx%2hhx%n",
+                    // args
+                    args
+                )
+            }
         }
 
         guard result == 16 && out.pointee == 36 else {
@@ -127,8 +127,8 @@ extension UUID: Hashable {
         // https://gist.github.com/vdka/3710efec131a403ae793a749edf34484#file-bytehashable-swift-L14-L31
 
         var h = 0
-        for byte in buffer {
-            h = h &+ numericCast(byte)
+        for i in 0..<UUID.size {
+            h = h &+ numericCast(bytes[i])
             h = h &+ (h << 10)
             h ^= (h >> 6)
         }
@@ -144,5 +144,5 @@ extension UUID: Hashable {
 extension UUID: Equatable { }
 
 public func == (lhs: UUID, rhs: UUID) -> Bool {
-    return memcmp(lhs.bytes, rhs.bytes, 16) == 0
+    return memcmp(lhs.bytes, rhs.bytes, UUID.size) == 0
 }
