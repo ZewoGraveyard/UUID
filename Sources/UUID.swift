@@ -7,6 +7,11 @@
 //
 
 import POSIX
+#if os(Linux)
+import Glibc
+#else
+import Darwin
+#endif
 
 public struct UUID {
 
@@ -19,7 +24,7 @@ public struct UUID {
         }
 
         deinit {
-            bytes.deallocateCapacity(UUID.size)
+            bytes.deallocate(capacity: UUID.size)
         }
     }
 
@@ -43,7 +48,7 @@ public struct UUID {
      */
     public init() {
         let bytes: UnsafeMutablePointer<UInt8> = {
-            let bytes = UnsafeMutablePointer<UInt8>(allocatingCapacity: UUID.size)
+            let bytes = UnsafeMutablePointer<UInt8>.allocate(capacity: UUID.size)
             let fd = open("/dev/urandom", O_RDONLY)
             read(fd, bytes, UUID.size)
             close(fd)
@@ -94,10 +99,10 @@ extension UUID: CustomStringConvertible, RawRepresentable {
             return nil
         }
 
-        let bytes = UnsafeMutablePointer<UInt8>.init(allocatingCapacity: UUID.size)
+        let bytes = UnsafeMutablePointer<UInt8>.allocate(capacity: UUID.size)
 
-        let out = UnsafeMutablePointer<Int32>(allocatingCapacity: 1)
-        defer { out.deallocateCapacity(1) }
+        let out = UnsafeMutablePointer<Int32>.allocate(capacity: 1)
+        defer { out.deallocate(capacity: 1) }
 
         let result: Int32 = rawValue.withCString { cString in
             let list = (0..<UUID.size).map { bytes.advanced(by: $0) as CVarArg }
